@@ -1,0 +1,13 @@
+# Create the .gitignore file (PowerShell/CMD)
+echo __pycache__/ >> .gitignore
+echo *.pyc >> .gitignore
+echo *.pyo >> .gitignore
+echo *.pyd >> .gitignore
+echo .Python >> .gitignore
+echo env/ >> .gitignore
+echo venv/ >> .gitignore
+echo .venv/ >> .gitignore
+echo .vscode/ >> .gitignore
+echo .idea/ >> .gitignore
+echo diversion_map.html >> .gitignore
+echo *.log >> .gitignore
