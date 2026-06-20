@@ -95,6 +95,8 @@ The script also generates an **interactive HTML map** (`diversion_map.html`).
 - The **Green PolyLine** shows the recommended alternate route. 
 
 This gives delivery command centers a quick, visual understanding of exactly where the disruption is and how to route their executives around it.
+<img width="485" height="278" alt="image" src="https://github.com/user-attachments/assets/8bd0f7f9-e1ed-46f3-bbe1-19e20ce5d5b5" />
+
 
 ---
 
@@ -115,5 +117,5 @@ This gives delivery command centers a quick, visual understanding of exactly whe
    pip install pandas numpy scikit-learn lightgbm xgboost catboost networkx geopy folium
 Run the prototype:
 
-in the terminal run it to get output
+in the terminal run it to get output:
 python traffic_ensemble_prototype.py
