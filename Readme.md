@@ -3,7 +3,6 @@
 ### *Our Submission for the Flipkart Gridlock Hackathon*
 
 ---
-
 ## 📌 The Problem We're Solving
 
 Flipkart's delivery ecosystem relies heavily on predictable movement. But cities are chaotic. 
