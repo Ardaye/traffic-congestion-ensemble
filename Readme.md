@@ -29,7 +29,6 @@ Here’s exactly what we deliver:
 Most importantly, **it learns**. The system compares its predictions against what actually happened and uses that error to refine future forecasts—ensuring Flipkart's delivery routes get smarter over time.
 
 ---
-
 ## 🏗️ How It Works (Under the Hood)
 
 1. **Feature Engineering**  
