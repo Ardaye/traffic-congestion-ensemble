@@ -146,7 +146,7 @@ Green PolyLine: The recommended alternate route
 
 This gives delivery command centers a quick, visual understanding of exactly where the disruption is and how to route their executives around it.
 
-<img width="485" height="278" alt="image" src="https://github.com/user-attachments/assets/8bd0f7f9-e1ed-46f3-bbe1-19e20ce5d5b5" />
+
 🧰 Tech Stack
 Category	Libraries
 Data Processing	Pandas, NumPy, Geopy
