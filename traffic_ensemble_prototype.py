@@ -86,33 +86,28 @@ def load_real_data(csv_path):
         df[col] = df[col].astype(str).str.replace(r'[^\d.\-]', '', regex=True)
         df[col] = pd.to_numeric(df[col], errors='coerce')
 
+    # Impute missing end coordinates from start (keeps rows with partial route data)
+    end_missing = df['endlatitude'].isna() | df['endlongitude'].isna()
+    if end_missing.any():
+        df.loc[end_missing, 'endlatitude'] = df.loc[end_missing, 'latitude']
+        df.loc[end_missing, 'endlongitude'] = df.loc[end_missing, 'longitude']
+        print(f"   Imputed end coordinates for {end_missing.sum()} rows from start lat/lon")
+
     before = len(df)
-    df = df.dropna(subset=coord_cols)
+    df = df.dropna(subset=['latitude', 'longitude'])
     if before - len(df) > 0:
-        print(f"   Dropped {before - len(df)} rows with invalid coordinates")
+        print(f"   Dropped {before - len(df)} rows with invalid start coordinates")
 
     date_cols = ['start_datetime', 'end_datetime', 'created_date', 'resolved_datetime']
     for col in date_cols:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors='coerce')
 
-    for col in ['start_datetime', 'end_datetime', 'created_date']:
-        if col in df.columns:
-            before = len(df)
-            df = df.dropna(subset=[col])
-            if before - len(df) > 0:
-                print(f"   Dropped {before - len(df)} rows with missing {col}")
-
     if len(df) == 0:
         print("❌ ERROR: No valid rows remaining after cleaning. Exiting.")
         sys.exit(1)
 
-    before = len(df)
-    df = df.dropna(subset=coord_cols)
-    if before - len(df) > 0:
-        print(f"   Dropped additional {before - len(df)} rows with NaN coordinates")
-
-    print(f"   ✅ {len(df)} valid rows loaded!")
+    print(f"   ✅ {len(df)} valid rows loaded (using all rows with imputation where needed)!")
     return df
 
 
@@ -141,16 +136,33 @@ def engineer_features(df):
 
     df['affected_road_km'] = df.apply(safe_geodesic, axis=1).clip(lower=0.1)
 
-    for col in ['start_datetime', 'end_datetime', 'created_date']:
+    for col in ['start_datetime', 'end_datetime', 'created_date', 'resolved_datetime']:
         if col in df.columns and not pd.api.types.is_datetime64_any_dtype(df[col]):
             df[col] = pd.to_datetime(df[col], errors='coerce')
 
+    # Impute missing datetimes so all rows remain usable for training
     if 'start_datetime' in df.columns and df['start_datetime'].isna().any():
+        missing_start = df['start_datetime'].isna()
+        if 'created_date' in df.columns:
+            df.loc[missing_start, 'start_datetime'] = df.loc[missing_start, 'created_date']
+        missing_start = df['start_datetime'].isna()
+        if 'end_datetime' in df.columns:
+            df.loc[missing_start, 'start_datetime'] = (
+                df.loc[missing_start, 'end_datetime'] - pd.Timedelta(minutes=60)
+            )
+        missing_start = df['start_datetime'].isna()
+        if 'resolved_datetime' in df.columns:
+            df.loc[missing_start, 'start_datetime'] = df.loc[missing_start, 'resolved_datetime']
         df['start_datetime'] = df['start_datetime'].fillna(pd.Timestamp.now())
+
     if 'end_datetime' in df.columns and df['end_datetime'].isna().any():
         df['end_datetime'] = df['end_datetime'].fillna(df['start_datetime'] + pd.Timedelta(minutes=60))
     if 'created_date' in df.columns and df['created_date'].isna().any():
         df['created_date'] = df['created_date'].fillna(df['start_datetime'] - pd.Timedelta(hours=2))
+
+    for col in ['start_datetime', 'end_datetime', 'created_date']:
+        if col in df.columns:
+            df[col] = pd.to_datetime(df[col], errors='coerce')
 
     df['start_hour'] = df['start_datetime'].dt.hour
     df['start_day_of_week'] = df['start_datetime'].dt.dayofweek
@@ -198,7 +210,9 @@ def engineer_features(df):
 # ==============================================
 def train_test_evaluate(df_processed):
     """Split chronologically, train on train set, evaluate on test set."""
-    
+    df_processed = df_processed.sort_values('start_datetime').reset_index(drop=True)
+    print(f"\n📊 Using all {len(df_processed)} rows (sorted chronologically by start_datetime)")
+
     # --- Encode categoricals ---
     le_event = LabelEncoder()
     le_zone = LabelEncoder()
